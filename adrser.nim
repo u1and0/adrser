@@ -3,22 +3,23 @@
 # データを抽出して標準出力します。
 ]#
 import
-  std/strformat,
+  system/iterators,
+  std/json,
   std/os,
   std/strutils,
-  system/iterators,
+  std/strformat,
   xlsx
 
-type Address = tuple[
-  要求番号,
-  要求年月日,
-  生産命令番号,
-  輸送区間,
-  送り先,
-  物品名称,
-  重量長さ,
-  荷姿,
-  要求元: string]
+type Address = object
+  要求番号: string
+  要求年月日: string
+  生産命令番号: string
+  輸送区間: string
+  送り先: string
+  物品名称: string
+  重量長さ: string
+  荷姿: string
+  要求元: string
 
 proc toSeq(self: Address): seq[string] =
   for i in self.fields():
@@ -27,7 +28,7 @@ proc toSeq(self: Address): seq[string] =
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
 
-proc extractData(filename: string): Address =
+proc newAddress(filename: string): Address =
   const sheetName = "入力画面"
   let table = parseExcel(filename)
   let rows = table[sheetName].
@@ -35,16 +36,16 @@ proc extractData(filename: string): Address =
   var col: seq[string]
   for row in rows:
     col.add(row[4])
-  return (
-      要求番号: col[0],
-      要求年月日: col[1],
-      生産命令番号: col[5],
-      輸送区間: col[6],
-      送り先: col[11],
-      物品名称: col[12],
-      重量長さ: col[13],
-      荷姿: col[14],
-      要求元: col[2],
+  return Address(
+    要求番号: col[0],
+    要求年月日: col[1],
+    生産命令番号: col[5],
+    輸送区間: col[6],
+    送り先: col[11],
+    物品名称: col[12],
+    重量長さ: col[13],
+    荷姿: col[14],
+    要求元: col[2],
     )
 
 proc convertAddress(root: string, limit: int): seq[Address] =
@@ -53,7 +54,7 @@ proc convertAddress(root: string, limit: int): seq[Address] =
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
       try:
-        let data: Address = extractData(f)
+        let data: Address = newAddress(f)
         result.add(data) # 解析できたファイルのみ追加
       except KeyError:
         echo &"Invarid file error: {f}"
@@ -73,3 +74,7 @@ when isMainModule:
 
   echo "一行につなげて表示"
   echo df[4].concat()
+
+  echo "JSON化"
+  let j = %* df
+  echo j.pretty()
