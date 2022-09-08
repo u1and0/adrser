@@ -6,6 +6,7 @@ import
   std/strformat,
   std/os,
   std/strutils,
+  system/iterators,
   xlsx
 
 const
@@ -22,6 +23,13 @@ type Address = tuple[
   重量長さ,
   荷姿,
   要求元: string]
+
+proc toSeq(self: Address): seq[string] =
+  for i in self.fields():
+    result.add(i)
+
+proc concat(self: Address): string =
+  self.toSeq().join(" ").replace("\n", "")
 
 proc extractData(filename: string): Address =
   const sheetName = "入力画面"
@@ -63,4 +71,8 @@ when isMainModule:
 
   echo &"パース成功ファイル数: {i}\n"
   echo &"全データ: {df}"
-  for d in df: echo d.要求番号 # 特定フィールドのみ表示
+  echo "特定フィールドのみ表示"
+  for d in df: echo d.要求番号
+
+  echo "一行につなげて表示"
+  echo df[4].concat()
