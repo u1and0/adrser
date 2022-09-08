@@ -9,10 +9,6 @@ import
   system/iterators,
   xlsx
 
-const
-  ROOT = "/work"
-  LIMIT = 10
-
 type Address = tuple[
   要求番号,
   要求年月日,
@@ -51,17 +47,14 @@ proc extractData(filename: string): Address =
       要求元: col[2],
     )
 
-when isMainModule:
-  var
-    i: int
-    df: seq[Address]
-  for f in walkDirRec(ROOT):
-    if i >= LIMIT: break
-    if f.contains("00-") and f.endsWith(".xlsx"): # *00-*.xlsx
+proc convertAddress(root: string, limit: int): seq[Address] =
+  for f in walkDirRec(root):
+    if len(result) >= limit: break
+    let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
+    if filePattern:
       try:
         let data: Address = extractData(f)
-        df.add(data)
-        i+=1 # 解析できたファイルのみカウント
+        result.add(data) # 解析できたファイルのみ追加
       except KeyError:
         echo &"Invarid file error: {f}"
         continue
@@ -69,7 +62,11 @@ when isMainModule:
         echo &"Parse Excel error: {f}"
         continue
 
-  echo &"パース成功ファイル数: {i}\n"
+
+when isMainModule:
+  let df = convertAddress("/work", 10)
+
+  echo &"パース成功ファイル数: {len(df)}\n"
   echo &"全データ: {df}"
   echo "特定フィールドのみ表示"
   for d in df: echo d.要求番号
