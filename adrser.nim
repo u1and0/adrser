@@ -8,7 +8,8 @@ import
   std/os,
   std/strutils,
   std/strformat,
-  xlsx
+  xlsx,
+  jester, asyncdispatch
 
 type Address = object
   要求番号: string
@@ -63,18 +64,30 @@ proc convertAddress(root: string, limit: int): seq[Address] =
         echo &"Parse Excel error: {f}"
         continue
 
+let df = convertAddress("/work", 10)
+
+echo &"パース成功ファイル数: {len(df)}\n"
+echo &"全データ: {df}"
+echo "特定フィールドのみ表示"
+for d in df: echo d.要求番号
+
+echo "一行につなげて表示"
+echo df[4].concat()
+
+echo "JSON化"
+let j = %* df
+echo j.pretty()
+
+router route:
+  get "/":
+    resp(Http200, j.pretty(), contentType = "application/json")
+
+# Server routing
+proc main() =
+  let settings = newSettings(port = Port(3333))
+  var jes = initJester(route, settings = settings)
+  jes.serve()
+
 
 when isMainModule:
-  let df = convertAddress("/work", 10)
-
-  echo &"パース成功ファイル数: {len(df)}\n"
-  echo &"全データ: {df}"
-  echo "特定フィールドのみ表示"
-  for d in df: echo d.要求番号
-
-  echo "一行につなげて表示"
-  echo df[4].concat()
-
-  echo "JSON化"
-  let j = %* df
-  echo j.pretty()
+  main()
