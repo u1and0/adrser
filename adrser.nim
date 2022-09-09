@@ -8,8 +8,9 @@ import
   std/os,
   std/strutils,
   std/strformat,
+  std/tables,
   xlsx,
-  jester, asyncdispatch
+  jester
 
 type Address = object
   要求番号: string
@@ -22,12 +23,20 @@ type Address = object
   荷姿: string
   要求元: string
 
+var df: seq[Address]
+
 proc toSeq(self: Address): seq[string] =
   for i in self.fields():
     result.add(i)
 
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
+
+# type AddressObject = object
+
+# proc objectile(self: Address): AddressObject =
+#   let a = newTable()
+
 
 proc newAddress(filename: string): Address =
   const sheetName = "入力画面"
@@ -49,14 +58,15 @@ proc newAddress(filename: string): Address =
     要求元: col[2],
     )
 
-proc convertAddress(root: string, limit: int): seq[Address] =
+proc convertAddress(root: string, limit: int) =
   for f in walkDirRec(root):
-    if len(result) >= limit: break
+    if len(df) >= limit: break
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
       try:
         let data: Address = newAddress(f)
-        result.add(data) # 解析できたファイルのみ追加
+        yield data
+        # df.add(data) # 解析できたファイルのみ追加
       except KeyError:
         echo &"Invarid file error: {f}"
         continue
@@ -64,22 +74,26 @@ proc convertAddress(root: string, limit: int): seq[Address] =
         echo &"Parse Excel error: {f}"
         continue
 
-let df = convertAddress("/work", 10)
+proc aconv(): Future[seq[JsonNode]] {.async.} =
+  convertAddress("/work", 1000)
+  echo &"パース成功ファイル数: {len(df)}\n"
+  echo &"全データ: {df}"
+  echo "特定フィールドのみ表示"
+  for d in df: echo d.要求番号
 
-echo &"パース成功ファイル数: {len(df)}\n"
-echo &"全データ: {df}"
-echo "特定フィールドのみ表示"
-for d in df: echo d.要求番号
+  echo "一行につなげて表示"
+  echo df[4].concat()
 
-echo "一行につなげて表示"
-echo df[4].concat()
 
-echo "JSON化"
-let j = %* df
-echo j.pretty()
+  echo "JSON化"
+  let j = %* df
+  echo j.pretty()
+  return j.await
+
 
 router route:
   get "/":
+    let j = await aconv()
     resp(Http200, j.pretty(), contentType = "application/json")
 
 # Server routing
