@@ -3,6 +3,7 @@
 # データを抽出して標準出力します。
 ]#
 import
+  asyncdispatch,
   system/iterators,
   std/json,
   std/os,
@@ -22,8 +23,6 @@ type Address = object
   重量長さ: string
   荷姿: string
   要求元: string
-
-var df: seq[Address]
 
 proc toSeq(self: Address): seq[string] =
   for i in self.fields():
@@ -58,14 +57,12 @@ proc newAddress(filename: string): Address =
     要求元: col[2],
     )
 
-proc convertAddress(root: string, limit: int) =
+iterator addressIter(root: string): Address =
   for f in walkDirRec(root):
-    if len(df) >= limit: break
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
       try:
-        let data: Address = newAddress(f)
-        yield data
+        yield newAddress(f)
         # df.add(data) # 解析できたファイルのみ追加
       except KeyError:
         echo &"Invarid file error: {f}"
@@ -74,8 +71,7 @@ proc convertAddress(root: string, limit: int) =
         echo &"Parse Excel error: {f}"
         continue
 
-proc aconv(): Future[seq[JsonNode]] {.async.} =
-  convertAddress("/work", 1000)
+proc checkData(df: seq[Address]) =
   echo &"パース成功ファイル数: {len(df)}\n"
   echo &"全データ: {df}"
   echo "特定フィールドのみ表示"
@@ -84,24 +80,31 @@ proc aconv(): Future[seq[JsonNode]] {.async.} =
   echo "一行につなげて表示"
   echo df[4].concat()
 
-
   echo "JSON化"
   let j = %* df
   echo j.pretty()
-  return j.await
 
+proc init(): Future[seq[Address]] = # make data at first
+  var df: seq[Address]
+  for a in addressIter("/work"):
+    if len(df) >= 100: break
+    df.add(a)
+  return df.await()
 
 router route:
   get "/":
-    let j = await aconv()
+    var df: seq[Address]
+    df = await init()
+    df.checkData()
+    let j = %* df
     resp(Http200, j.pretty(), contentType = "application/json")
 
 # Server routing
-proc main() =
+proc main() {.async.} =
   let settings = newSettings(port = Port(3333))
   var jes = initJester(route, settings = settings)
   jes.serve()
 
 
 when isMainModule:
-  main()
+  waitFor main()
