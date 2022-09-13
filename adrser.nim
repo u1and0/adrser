@@ -9,7 +9,7 @@ import
   std/strutils,
   std/strformat,
   xlsx,
-  jester, asyncdispatch
+  jester
 
 type Address = object
   要求番号: string
@@ -68,7 +68,24 @@ proc convertAddress(root: string, limit: int): seq[Address] =
         echo &"Parse Excel error: {f}"
         continue
 
-let df = convertAddress("/work", 10)
+iterator convertAddress(root: string): Address =
+  for f in walkDirRec(root):
+    let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
+    if filePattern:
+      try:
+        yield newAddress(f)
+      except KeyError:
+        echo &"Invarid file error: {f}"
+        continue
+      except:
+        echo &"Parse Excel error: {f}"
+        continue
+
+var df: seq[Address]
+const LIMIT = 10
+for a in convertAddress("/work"):
+  if len(df) >= LIMIT: break
+  df.add(a)
 
 echo &"パース成功ファイル数: {len(df)}\n"
 echo &"全データ: {df}"
@@ -91,7 +108,6 @@ proc main() =
   let settings = newSettings(port = Port(3333))
   var jes = initJester(route, settings = settings)
   jes.serve()
-
 
 when isMainModule:
   main()
