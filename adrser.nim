@@ -93,14 +93,14 @@ iterator convertAddress(root: string): Address =
         continue
 
 var df: seq[Address]
-const LIMIT = 10
+const LIMIT = 100
 for a in convertAddress("/work"):
   if len(df) >= LIMIT: break
   df.add(a)
 
 
 router route:
-  get "/":
+  get "/json":
     let j = %* df.toTable()
     df.checkData()
     resp(Http200, j.pretty(), contentType = "application/json")
@@ -108,11 +108,11 @@ router route:
     resp """
       <div>
         <label for="search-form">検索フォーム</label>
-        <input name="search-form" id="search-form" type="text" placeholder="検索キーワードを入力" size="20" class="hover">
-        <br>
+        <input name="search-form" id="search-form" type="text" placeholder="検索キーワードを入力" size="20" class="hover"><br>
         <select name="search-result" id="search-result" class="select-box" size="10"></select>
       </div>
-    """
+      <script type="module" src="/dist/main.js"></script>
+      """
 
 # Server routing
 proc main() =

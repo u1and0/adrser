@@ -1,2 +1,3 @@
 adrser
 *.xlsx
+/static/node_modules/
