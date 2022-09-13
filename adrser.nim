@@ -3,15 +3,13 @@
 # データを抽出して標準出力します。
 ]#
 import
-  asyncdispatch,
   system/iterators,
   std/json,
   std/os,
   std/strutils,
   std/strformat,
-  std/tables,
   xlsx,
-  jester
+  jester, asyncdispatch
 
 type Address = object
   要求番号: string
@@ -31,10 +29,8 @@ proc toSeq(self: Address): seq[string] =
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
 
-# type AddressObject = object
-
-# proc objectile(self: Address): AddressObject =
-#   let a = newTable()
+proc toTable(self: seq[Address]): Table[string, Address] =
+  for a in self: result[a.concat()] = a
 
 
 proc newAddress(filename: string): Address =
@@ -57,13 +53,14 @@ proc newAddress(filename: string): Address =
     要求元: col[2],
     )
 
-iterator addressIter(root: string): Address =
+proc convertAddress(root: string, limit: int): seq[Address] =
   for f in walkDirRec(root):
+    if len(result) >= limit: break
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
       try:
-        yield newAddress(f)
-        # df.add(data) # 解析できたファイルのみ追加
+        let data: Address = newAddress(f)
+        result.add(data) # 解析できたファイルのみ追加
       except KeyError:
         echo &"Invarid file error: {f}"
         continue
@@ -71,40 +68,30 @@ iterator addressIter(root: string): Address =
         echo &"Parse Excel error: {f}"
         continue
 
-proc checkData(df: seq[Address]) =
-  echo &"パース成功ファイル数: {len(df)}\n"
-  echo &"全データ: {df}"
-  echo "特定フィールドのみ表示"
-  for d in df: echo d.要求番号
+let df = convertAddress("/work", 10)
 
-  echo "一行につなげて表示"
-  echo df[4].concat()
+echo &"パース成功ファイル数: {len(df)}\n"
+echo &"全データ: {df}"
+echo "特定フィールドのみ表示"
+for d in df: echo d.要求番号
 
-  echo "JSON化"
-  let j = %* df
-  echo j.pretty()
+echo "一行につなげて表示"
+echo df[4].concat()
 
-proc init(): Future[seq[Address]] = # make data at first
-  var df: seq[Address]
-  for a in addressIter("/work"):
-    if len(df) >= 100: break
-    df.add(a)
-  return df.await()
+echo "JSON化"
+let j = %* df.toTable()
+echo j.pretty()
 
 router route:
   get "/":
-    var df: seq[Address]
-    df = await init()
-    df.checkData()
-    let j = %* df
     resp(Http200, j.pretty(), contentType = "application/json")
 
 # Server routing
-proc main() {.async.} =
+proc main() =
   let settings = newSettings(port = Port(3333))
   var jes = initJester(route, settings = settings)
   jes.serve()
 
 
 when isMainModule:
-  waitFor main()
+  main()
