@@ -9,7 +9,7 @@ import
   std/strutils,
   std/strformat,
   xlsx,
-  jester
+  jester, htmlgen, asyncdispatch
 
 type Address = object
   要求番号: string
@@ -104,10 +104,12 @@ router route:
     let j = %* df.toTable()
     df.checkData()
     resp(Http200, j.pretty(), contentType = "application/json")
+  get "/get":
+    resp h1("hello World")
 
 # Server routing
 proc main() =
-  let settings = newSettings(port = Port(3333))
+  let settings = newSettings(port = Port(3333), staticDir = "static/")
   var jes = initJester(route, settings = settings)
   jes.serve()
 
