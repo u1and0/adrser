@@ -23,8 +23,7 @@ type Address = object
   要求元: string
 
 proc toSeq(self: Address): seq[string] =
-  for i in self.fields():
-    result.add(i)
+  for i in self.fields(): result.add(i)
 
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
@@ -32,6 +31,18 @@ proc concat(self: Address): string =
 proc toTable(self: seq[Address]): Table[string, Address] =
   for a in self: result[a.concat()] = a
 
+proc checkData(self: seq[Address]) =
+  echo &"パース成功ファイル数: {len(self)}\n"
+  echo &"全データ: {self}"
+  echo "特定フィールドのみ表示"
+  for d in self: echo d.要求番号
+
+  echo "一行につなげて表示"
+  echo self[4].concat()
+
+  echo "JSON化"
+  let j = %* self.toTable()
+  echo j.pretty()
 
 proc newAddress(filename: string): Address =
   const sheetName = "入力画面"
@@ -87,20 +98,11 @@ for a in convertAddress("/work"):
   if len(df) >= LIMIT: break
   df.add(a)
 
-echo &"パース成功ファイル数: {len(df)}\n"
-echo &"全データ: {df}"
-echo "特定フィールドのみ表示"
-for d in df: echo d.要求番号
-
-echo "一行につなげて表示"
-echo df[4].concat()
-
-echo "JSON化"
-let j = %* df.toTable()
-echo j.pretty()
 
 router route:
   get "/":
+    let j = %* df.toTable()
+    df.checkData()
     resp(Http200, j.pretty(), contentType = "application/json")
 
 # Server routing
