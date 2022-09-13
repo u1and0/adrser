@@ -105,7 +105,14 @@ router route:
     df.checkData()
     resp(Http200, j.pretty(), contentType = "application/json")
   get "/get":
-    resp h1("hello World")
+    resp """
+      <div>
+        <label for="search-form">検索フォーム</label>
+        <input name="search-form" id="search-form" type="text" placeholder="検索キーワードを入力" size="20" class="hover">
+        <br>
+        <select name="search-result" id="search-result" class="select-box" size="10"></select>
+      </div>
+    """
 
 # Server routing
 proc main() =
