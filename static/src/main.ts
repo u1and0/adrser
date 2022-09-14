@@ -55,6 +55,25 @@ inputElem?.addEventListener("keyup", () => {
   });
 });
 
+// fzfの結果を出力したoptionを選択するたびに各フォームの書き換え
+outputElem?.addEventListener("change", (e: Event) => {
+  const key: string = e.target.value;
+  const a: Address = addresses[key];
+  console.log(a);
+  const label: Array<string> = [
+    "要求番号",
+    "要求年月日",
+    "生産命令番号",
+    "輸送区間",
+    "送り先",
+    "物品名称",
+    "重量長さ",
+    "荷姿",
+    "要求元",
+  ];
+  label.forEach((l: string) => document.getElementById(l).innerHTML = a[l]);
+});
+
 function fzfSearchList(list: string[], keyword: string): string[] {
   const fzf = new Fzf(list);
   const entries = fzf.find(keyword);
