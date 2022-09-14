@@ -18,6 +18,7 @@ import
   xlsx,
   jester, htmlgen, asyncdispatch
 
+## Address: 住所録型
 type Address = object
   要求番号: string
   要求年月日: string
@@ -29,17 +30,21 @@ type Address = object
   荷姿: string
   要求元: string
 
+## toSeq(): Addressの値のみを出力してseqにする
 proc toSeq(self: Address): seq[string] =
   for i in self.fields(): # Addressの値のみ出力
     result.add(i)
 
+## concat(): Addressの値のみを連結して一要素の文字列にする
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
 
+## toTable(): seq[Address]を連結文字列のキーとAddressの値のTableにする
 proc toTable(self: seq[Address]): Table[string, Address] =
   for a in self:
     result[a.concat()] = a
 
+## checkData(): echo data frame
 proc checkData(self: seq[Address]) =
   echo &"パース成功ファイル数: {len(self)}\n"
   echo &"全データ: {self}"
@@ -53,6 +58,7 @@ proc checkData(self: seq[Address]) =
   let j = %* self.toTable()
   echo j.pretty()
 
+## newAddress(): parse excel file then export Address
 proc newAddress(filename: string): Address =
   const sheetName = "入力画面"
   let table = parseExcel(filename)
@@ -73,14 +79,19 @@ proc newAddress(filename: string): Address =
     要求元: col[2],
     )
 
+## yieldFiles(): root下のマッチしたファイルのみyieldする
 iterator yieldFiles(root: string): string =
   for f in walkDirRec(root):
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
       yield f
 
+## df: All data parsed by excel files
 var df: seq[Address]
 
+## init(): initialize data
+## parse xlsx by newAddress()
+## in yielded file set
 proc init() =
   const
     LIMIT = 10
@@ -152,7 +163,7 @@ router route:
     #   <script type="module" src="/dist/main.js"></script>
     #   """
 
-  # Server routing
+## main(): Server routing
 proc main() =
   let settings = newSettings(port = Port(3333), staticDir = "static/")
   var jes = initJester(route, settings = settings)
