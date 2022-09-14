@@ -108,10 +108,8 @@ for a in convertAddress("/work"):
 
 router route:
   get "/": # Heart beat
-    let ddf = df[0..9]
-    let j = %* ddf.toTable()
-    ddf.checkData()
-    resp(Http200, j.pretty(), contentType = "application/json")
+    const msg = "Hello, this is adrser heart beeat monitor."
+    resp(Http200, msg, contentType = "application/json")
   get "/json": # JSON API
     let j = %* df.toTable()
     df.checkData()
