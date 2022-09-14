@@ -1,6 +1,11 @@
 #[
-# /work下のxlsxファイルをパースして、タプルへ落とし込み、
-# データを抽出して標準出力します。
+# /work下のxlsxファイルをパースして、データを抽出します。
+# データをJSONとして配信し、ブラウザ上で検索し、表示します。
+# CheckData()で読み取ったデータを標準出力します。
+#
+# Usage
+# $ ./adrser
+# Then access http://localhost:3333 on browser, check display JSON data.
 ]#
 import
   system/iterators,
@@ -100,6 +105,11 @@ for a in convertAddress("/work"):
 
 
 router route:
+  get "/":
+    let ddf = df[0..9]
+    let j = %* ddf.toTable()
+    ddf.checkData()
+    resp(Http200, j.pretty(), contentType = "application/json")
   get "/json":
     let j = %* df.toTable()
     df.checkData()
