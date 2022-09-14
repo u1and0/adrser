@@ -69,33 +69,35 @@ proc newAddress(filename: string): Address =
     要求元: col[2],
     )
 
-proc convertAddress(root: string, limit: int): seq[Address] =
+iterator yieldFiles(root: string): string =
   for f in walkDirRec(root):
-    if len(result) >= limit: break
     let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
     if filePattern:
-      try:
-        let data: Address = newAddress(f)
-        result.add(data) # 解析できたファイルのみ追加
-      except KeyError:
-        echo &"Invarid file error: {f}"
-        continue
-      except:
-        echo &"Parse Excel error: {f}"
-        continue
+      yield f
+
+proc convertAddress(root: string, limit: int): seq[Address] =
+  for f in yieldFiles(root):
+    if len(result) >= limit: break
+    try:
+      let data: Address = newAddress(f)
+      result.add(data) # 解析できたファイルのみ追加
+    except KeyError:
+      echo &"Invarid file error: {f}"
+      continue
+    except:
+      echo &"Parse Excel error: {f}"
+      continue
 
 iterator convertAddress(root: string): Address =
-  for f in walkDirRec(root):
-    let filePattern = f.contains("00-") and f.endsWith(".xlsx") # *00-*.xlsx
-    if filePattern:
-      try:
-        yield newAddress(f)
-      except KeyError:
-        echo &"Invarid file error: {f}"
-        continue
-      except:
-        echo &"Parse Excel error: {f}"
-        continue
+  for f in yieldFiles(root):
+    try:
+      yield newAddress(f)
+    except KeyError:
+      echo &"Invarid file error: {f}"
+      continue
+    except:
+      echo &"Parse Excel error: {f}"
+      continue
 
 var df: seq[Address]
 const LIMIT = 10
