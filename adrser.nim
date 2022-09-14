@@ -163,10 +163,17 @@ router route:
     #   """
 
 ## main(): Server routing
-proc main() =
+proc main() {.async.} =
   let settings = newSettings(port = Port(3333), staticDir = "static/")
   var jes = initJester(route, settings = settings)
   jes.serve()
 
+  var i: int
+  while true:
+    echo "check loop " & $i
+    i += 1
+    sleep(2000)
+
 when isMainModule:
-  main()
+  asyncCheck main()
+  runForever()
