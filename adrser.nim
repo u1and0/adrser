@@ -98,7 +98,7 @@ iterator convertAddress(root: string): Address =
         continue
 
 var df: seq[Address]
-const LIMIT = 100
+const LIMIT = 10
 for a in convertAddress("/work"):
   if len(df) >= LIMIT: break
   df.add(a)
@@ -115,16 +115,25 @@ router route:
     df.checkData()
     resp(Http200, j.pretty(), contentType = "application/json")
   get "/get":
-    resp """
-      <div>
-        <label for="search-form">検索フォーム</label>
-        <input name="search-form" id="search-form" type="text" placeholder="検索キーワードを入力" size="20" class="hover"><br>
-        <select name="search-result" id="search-result" class="select-box" size="10"></select>
-      </div>
-      <script type="module" src="/dist/main.js"></script>
-      """
+    let
+      searchForm = input(name = "search-form", id = "search-form",
+          type = "text", placeholder = "検索キーワードを入力",
+          size = "20", class = "hover")
+      searchResult = select(name = "search-result", id = "search-result",
+          class = "select-box", size = "10")
+      js = script(type = "module", src = "/dist/main.js")
+    resp `div`(searchForm, searchResult) & js
+    # Same as...
+    #
+    # resp """
+    #   <div>
+    #     <input name="search-form" id="search-form" type="text" placeholder="検索キーワードを入力" size="20" class="hover"><br>
+    #     <select name="search-result" id="search-result" class="select-box" size="10"></select>
+    #   </div>
+    #   <script type="module" src="/dist/main.js"></script>
+    #   """
 
-# Server routing
+  # Server routing
 proc main() =
   let settings = newSettings(port = Port(3333), staticDir = "static/")
   var jes = initJester(route, settings = settings)
