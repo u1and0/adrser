@@ -31,16 +31,16 @@ type Address = object
   要求元: string
 
 ## toSeq(): Addressの値のみを出力してseqにする
-proc toSeq(self: Address): seq[string] =
+func toSeq(self: Address): seq[string] =
   for i in self.fields(): # Addressの値のみ出力
     result.add(i)
 
 ## concat(): Addressの値のみを連結して一要素の文字列にする
-proc concat(self: Address): string =
+func concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
 
 ## toTable(): seq[Address]を連結文字列のキーとAddressの値のTableにする
-proc toTable(self: seq[Address]): Table[string, Address] =
+func toTable(self: seq[Address]): Table[string, Address] =
   for a in self:
     result[a.concat()] = a
 
@@ -96,9 +96,8 @@ proc init() =
   const
     LIMIT = 10
     ROOT = "/work"
-  var
-    fileset = collect:
-      for f in yieldFiles(ROOT): {f}
+  var fileset = collect:
+    for f in yieldFiles(ROOT): {f}
   for f in fileset:
     if len(df) >= LIMIT: break
     try:
