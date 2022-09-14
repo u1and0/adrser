@@ -11,8 +11,10 @@ import
   system/iterators,
   std/json,
   std/os,
+  std/sets,
   std/strutils,
   std/strformat,
+  std/sugar,
   xlsx,
   jester, htmlgen, asyncdispatch
 
@@ -28,13 +30,15 @@ type Address = object
   要求元: string
 
 proc toSeq(self: Address): seq[string] =
-  for i in self.fields(): result.add(i)
+  for i in self.fields(): # Addressの値のみ出力
+    result.add(i)
 
 proc concat(self: Address): string =
   self.toSeq().join(" ").replace("\n", "")
 
 proc toTable(self: seq[Address]): Table[string, Address] =
-  for a in self: result[a.concat()] = a
+  for a in self:
+    result[a.concat()] = a
 
 proc checkData(self: seq[Address]) =
   echo &"パース成功ファイル数: {len(self)}\n"
@@ -75,36 +79,28 @@ iterator yieldFiles(root: string): string =
     if filePattern:
       yield f
 
-proc convertAddress(root: string, limit: int): seq[Address] =
-  for f in yieldFiles(root):
-    if len(result) >= limit: break
-    try:
-      let data: Address = newAddress(f)
-      result.add(data) # 解析できたファイルのみ追加
-    except KeyError:
-      echo &"Invarid file error: {f}"
-      continue
-    except:
-      echo &"Parse Excel error: {f}"
-      continue
-
-iterator convertAddress(root: string): Address =
-  for f in yieldFiles(root):
-    try:
-      yield newAddress(f)
-    except KeyError:
-      echo &"Invarid file error: {f}"
-      continue
-    except:
-      echo &"Parse Excel error: {f}"
-      continue
-
 var df: seq[Address]
-const LIMIT = 10
-for a in convertAddress("/work"):
-  if len(df) >= LIMIT: break
-  df.add(a)
 
+proc init() =
+  const
+    LIMIT = 10
+    ROOT = "/work"
+  var
+    fileset = collect:
+      for f in yieldFiles(ROOT): {f}
+  for f in fileset:
+    if len(df) >= LIMIT: break
+    try:
+      let ad = newAddress(f)
+      df.add(ad)
+    except KeyError:
+      echo &"Invarid file error: {f}"
+      continue
+    except:
+      echo &"Parse Excel error: {f}"
+      continue
+
+init()
 
 router route:
   get "/": # Heart beat
