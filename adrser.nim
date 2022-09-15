@@ -130,9 +130,14 @@ router route:
                     crossorigin = "anonymous")
       head = head(favicon & bootstrap)
 
-      searchForm = input(name = "search-form", id = "search-form",
-          type = "text", placeholder = "検索キーワードを入力",
-          size = "20", class = "hover")
+      searchForm = input(
+            name = "search-form",
+            id = "search-form",
+            type = "text",
+            placeholder = "検索キーワードを入力",
+            size = "20",
+            class = "hover",
+        )
       searchResult = select(name = "search-result", id = "search-result",
           class = "select-box", size = "10")
       searchContainer = `div`(searchForm, br(), searchResult)
@@ -157,9 +162,10 @@ router route:
         tr(td("荷姿"), td(span(id = "荷姿"))),
         tr(td("要求元"), td(span(id = "要求元"))),
       )
-
       js = script(type = "module", src = "/dist/main.js")
-      html = head & searchContainer & outputTable & js
+      body = searchContainer & outputTable & js
+
+      html = head & body
     resp(Http200, html)
     # Same as...
     #
