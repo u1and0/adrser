@@ -122,10 +122,13 @@ router route:
     resp(Http200, j.pretty(), contentType = "application/json")
   get "/search": # Distribute search UI for browser
     let
-      link = link(type = "image/png",
+      favicon = link(type = "image/png",
                   rel = "icon",
                   href = "/icons8-連絡先を検索-96.png")
-      head = head(link)
+      bootstrap = link(href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css",
+                    rel = "stylesheet",
+                    crossorigin = "anonymous")
+      head = head(favicon & bootstrap)
 
       searchForm = input(name = "search-form", id = "search-form",
           type = "text", placeholder = "検索キーワードを入力",
@@ -135,13 +138,20 @@ router route:
       searchContainer = `div`(searchForm, br(), searchResult)
 
       outputTable = table(
-        tr(td("要求番号"), td(span(id = "要求番号"))),
+        class = "table table-striped table-hover",
+        tr(
+          td(style = "width:20%", "要求番号"),
+          td(span(id = "要求番号")),
+        ),
         tr(td("要求年月日"), td(span(id = "要求年月日"))),
         tr(td("要求番号"), td(span(id = "要求番号"))),
         tr(td("生産命令番号"), td(span(id = "生産命令番号"))),
         tr(td("輸送区間"), td(span(id = "輸送区間"))),
-        tr(td("送り先"), td(textarea(id = "送り先", readonly = "",
-            style = "width:242px; height:100px;"))),
+        tr(
+          td("送り先"),
+          td(textarea(id = "送り先", readonly = "",
+            style = "width:242px; height:100px;")),
+          ),
         tr(td("物品名称"), td(span(id = "物品名称"))),
         tr(td("重量長さ"), td(span(id = "重量長さ"))),
         tr(td("荷姿"), td(span(id = "荷姿"))),
