@@ -114,7 +114,7 @@ init()
 
 router route:
   get "/": # Heart beat
-    const msg = "Hello, this is adrser heart beeat monitor."
+    const msg = "Hello, this is adrser heart beeat monitor. Try access to /json, /search API"
     resp(Http200, msg, contentType = "application/json")
   get "/json": # JSON API
     let j = %* df.toTable()
