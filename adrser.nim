@@ -122,6 +122,11 @@ router route:
     resp(Http200, j.pretty(), contentType = "application/json")
   get "/search": # Distribute search UI for browser
     let
+      link = link(type = "image/png",
+                  rel = "icon",
+                  href = "/icons8-連絡先を検索-96.png")
+      head = head(link)
+
       searchForm = input(name = "search-form", id = "search-form",
           type = "text", placeholder = "検索キーワードを入力",
           size = "20", class = "hover")
@@ -144,7 +149,7 @@ router route:
       )
 
       js = script(type = "module", src = "/dist/main.js")
-      html = searchContainer & outputTable & js
+      html = head & searchContainer & outputTable & js
     resp(Http200, html)
     # Same as...
     #
