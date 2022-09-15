@@ -1,7 +1,6 @@
 #[
 # /work下のxlsxファイルをパースして、データを抽出します。
 # データをJSONとして配信し、ブラウザ上で検索し、表示します。
-# CheckData()で読み取ったデータを標準出力します。
 #
 # Usage
 # $ ./adrser
@@ -31,7 +30,6 @@ proc printHelp() =
   echo &"""
 /work下のxlsxファイルをパースして、データを抽出します。
 データをJSONとして配信し、ブラウザ上で検索し、表示します。
-CheckData()で読み取ったデータを標準出力します。
 
 Usage
 $ ./adrser
@@ -39,6 +37,12 @@ Then access http://localhost:3333 on browser, check display JSON data.
 
 With option
 $ ./adrser -l=10 -d=/path/to/xlsxdir
+
+Options:
+  --limit, -l=[VALUE]     Change limit value (default {LIMIT})
+  --dir, -d=[VALUE]       Change parse excel files directory (default {ROOT})
+  --version, -v           Show version
+  --help, -h              Show help
   """
   quit()
 
@@ -114,7 +118,7 @@ var df: seq[Address]
 ## parse xlsx by newAddress() in yielded file set.
 proc init() =
   # Command line parse
-  var # default value
+  var # Default value
     limit = LIMIT
     root = ROOT
   for kind, key, val in getopt():
