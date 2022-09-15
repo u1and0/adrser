@@ -131,15 +131,19 @@ router route:
       head = head(favicon & bootstrap)
 
       searchForm = input(
-            name = "search-form",
-            id = "search-form",
-            type = "text",
-            placeholder = "検索キーワードを入力",
-            size = "20",
-            class = "hover",
+          name = "search-form",
+          id = "search-form",
+          type = "text",
+          placeholder = "検索キーワードを入力",
+          size = "20",
+          class = "hover",
         )
-      searchResult = select(name = "search-result", id = "search-result",
-          class = "select-box", size = "10")
+      searchResult = select(
+          name = "search-result",
+          id = "search-result",
+          class = "form-select",
+          size = "10",
+        )
       searchContainer = `div`(searchForm, br(), searchResult)
 
       outputTable = table(
@@ -155,7 +159,7 @@ router route:
         tr(
           td("送り先"),
           td(textarea(id = "送り先", readonly = "",
-            style = "width:242px; height:100px;")),
+            style = "width:400px; height:100px;")),
           ),
         tr(td("物品名称"), td(span(id = "物品名称"))),
         tr(td("重量長さ"), td(span(id = "重量長さ"))),
