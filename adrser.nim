@@ -6,17 +6,45 @@
 # Usage
 # $ ./adrser
 # Then access http://localhost:3333 on browser, check display JSON data.
+#
+# With option
+# $ ./adrser -l=10 -d=/path/to/xlsxdir
 ]#
 import
   system/iterators,
   std/json,
   std/os,
+  std/parseopt,
   std/sets,
   std/strutils,
   std/strformat,
   std/sugar,
   xlsx,
   jester, htmlgen, asyncdispatch
+
+const
+  VERSION = "v0.1.0"
+  LIMIT = 100000
+  ROOT = "/work"
+
+proc printHelp() =
+  echo &"""
+/work下のxlsxファイルをパースして、データを抽出します。
+データをJSONとして配信し、ブラウザ上で検索し、表示します。
+CheckData()で読み取ったデータを標準出力します。
+
+Usage
+$ ./adrser
+Then access http://localhost:3333 on browser, check display JSON data.
+
+With option
+$ ./adrser -l=10 -d=/path/to/xlsxdir
+  """
+  quit()
+
+proc printVersion() =
+  echo "adrser version: " & VERSION
+  quit()
 
 ## Address: 住所録型
 type Address = object
@@ -47,14 +75,6 @@ func toTable(self: seq[Address]): Table[string, Address] =
 ## checkData(): echo data frame
 proc checkData(self: seq[Address]) =
   echo &"パース成功ファイル数: {len(self)}\n"
-  echo &"全データ: {self}"
-  echo "特定フィールドのみ表示"
-  for d in self: echo d.要求番号
-
-  echo "一行につなげて表示"
-  echo self[4].concat()
-
-  echo "JSON化"
   let j = %* self.toTable()
   echo j.pretty()
 
@@ -90,16 +110,29 @@ iterator yieldFiles(root: string): string =
 var df: seq[Address]
 
 ## init(): initialize data
-## parse xlsx by newAddress()
-## in yielded file set
+## parse command line options.
+## parse xlsx by newAddress() in yielded file set.
 proc init() =
-  const
-    LIMIT = 10
-    ROOT = "/work"
+  # Command line parse
+  var # default value
+    limit = LIMIT
+    root = ROOT
+  for kind, key, val in getopt():
+    case kind
+    of cmdArgument: discard
+    of cmdLongOption, cmdShortOption:
+      case key
+      of "help", "h": printHelp()
+      of "version", "v": printVersion()
+      of "limit", "l": limit = parseInt(val)
+      of "dir", "d": root = val
+    of cmdEnd: discard
+
+  # Excel parse
   var fileset = collect:
-    for f in yieldFiles(ROOT): {f}
+    for f in yieldFiles(root): {f}
   for f in fileset:
-    if len(df) >= LIMIT: break
+    if len(df) >= limit: break
     try:
       let ad = newAddress(f)
       df.add(ad)
@@ -109,8 +142,6 @@ proc init() =
     except:
       echo &"Parse Excel error: {f}"
       continue
-
-init()
 
 router route:
   get "/": # Heart beat
@@ -124,7 +155,7 @@ router route:
     let
       favicon = link(type = "image/png",
                   rel = "icon",
-                  href = "/icons8-連絡先を検索-96.png")
+                  href = "/favicon.png")
       bootstrap = link(href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css",
                     rel = "stylesheet",
                     crossorigin = "anonymous")
@@ -194,4 +225,5 @@ proc main() =
   jes.serve()
 
 when isMainModule:
+  init()
   main()
